@@ -97,8 +97,21 @@ class Logout(Resource):
         db.session.clear()
         return jsonify({"message": "Logged out successfully"}), 200
 
+class CheckSession(Resource):
+    def get(self):
+        user_id = db.session.get('user_id')
+        if user_id:
+            user = User.query.filter(User.id == user_id).first()
+            if user:
+                return jsonify(user.to_dict()), 200
+            else:
+                return jsonify({"error": "User not found"}), 404
+        else:
+            return jsonify({"error": "Unauthorized"}), 401
+
 # Add resources to the API
 api.add_resource(UploadProfilePicture, '/upload')
 api.add_resource(SignUp, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
+api.add_resource(CheckSession, '/checksession')
