@@ -166,6 +166,53 @@ class UserDetail(Resource):
         db.session.commit()
         return jsonify({"message": "User updated successfully", "user": user.to_dict()}), 200
 
+class CreateProfile(Resource):
+    def post(self, user_id):
+        data = request.get_json()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        address = data.get('address')
+        phone_number = data.get('phone_number')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        gender = data.get('gender')
+        age = data.get('age')
+        bio = data.get('bio')
+        location = data.get('location')
+        profile_picture = data.get('profile_picture')  # Assume this is a file-like object
+
+        # Create a new profile or update an existing one
+        profile = Profile.query.filter_by(user_id=user_id).first()
+        if not profile:
+            profile = Profile(user_id=user_id)
+
+        # Update profile fields
+        profile.address = address
+        profile.phone_number = phone_number
+        profile.first_name = first_name
+        profile.last_name = last_name
+        profile.gender = gender
+        profile.age = age
+        profile.bio = bio
+        profile.location = location
+
+        # Handle profile picture upload if provided
+        if profile_picture:
+            try:
+                upload_result = upload(profile_picture)  # Upload to Cloudinary
+                profile.profile_picture = upload_result['secure_url']  # Save the URL
+                profile.profile_picture_id = upload_result['public_id']  # Save the public ID
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        # Commit the changes to the database
+        db.session.add(profile)  
+        db.session.commit()
+
+        return jsonify({"message": "Profile created/updated successfully", "profile": profile.to_dict()}), 200
+
 # Add resources to the API
 api.add_resource(UploadProfilePicture, '/upload')
 api.add_resource(SignUp, '/signup')
@@ -174,3 +221,4 @@ api.add_resource(Logout, '/logout')
 api.add_resource(CheckSession, '/checksession')
 api.add_resource(UserList, '/users')
 api.add_resource(UserDetail, '/users/<int:user_id>')
+api.add_resource(CreateProfile, '/createprofile/<int:user_id>')
