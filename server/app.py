@@ -222,3 +222,5 @@ api.add_resource(CheckSession, '/checksession')
 api.add_resource(UserList, '/users')
 api.add_resource(UserDetail, '/users/<int:user_id>')
 api.add_resource(CreateProfile, '/createprofile/<int:user_id>')
+if __name__ == '__main__':
+    app.run(debug=True)
