@@ -109,9 +109,16 @@ class CheckSession(Resource):
         else:
             return jsonify({"error": "Unauthorized"}), 401
 
+class UserList(Resource):
+    def get(self):
+        users = User.query.all()
+        return jsonify([user.to_dict() for user in users])
+
+
 # Add resources to the API
 api.add_resource(UploadProfilePicture, '/upload')
 api.add_resource(SignUp, '/signup')
 api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
 api.add_resource(CheckSession, '/checksession')
+api.add_resource(UserList, '/users')
