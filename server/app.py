@@ -115,6 +115,57 @@ class UserList(Resource):
         return jsonify([user.to_dict() for user in users])
 
 
+class UserDetail(Resource):
+    def get(self, user_id):
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+        return jsonify(user.to_dict())
+
+    def patch(self, user_id):
+        data = request.get_json()
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+            # Update user fields
+        address = data.get('address')
+        phone_number = data.get('phone_number')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        gender = data.get('gender')
+        age = data.get('age')
+        bio = data.get('bio')
+        location = data.get('location')
+
+        if address:
+            user.address = address
+        if phone_number:
+            user.phone_number = phone_number
+        if first_name:
+            user.first_name = first_name
+        if last_name:
+            user.last_name = last_name
+        if gender:
+            user.gender = gender
+        if age:
+            user.age = age
+        if bio:
+            user.bio = bio
+        if location:
+            user.location = location
+
+        # Handle profile picture upload
+        if 'profile_picture' in data:
+            try:
+                upload_result = upload(data['profile_picture'])
+                user.profile_picture = upload_result['secure_url']
+            except Exception as e:
+                return jsonify({"error": str(e)}), 500
+
+        db.session.commit()
+        return jsonify({"message": "User updated successfully", "user": user.to_dict()}), 200
+
 # Add resources to the API
 api.add_resource(UploadProfilePicture, '/upload')
 api.add_resource(SignUp, '/signup')
@@ -122,3 +173,4 @@ api.add_resource(Login, '/login')
 api.add_resource(Logout, '/logout')
 api.add_resource(CheckSession, '/checksession')
 api.add_resource(UserList, '/users')
+api.add_resource(UserDetail, '/users/<int:user_id>')
