@@ -45,3 +45,60 @@ class UploadProfilePicture(Resource):
             })
         except Exception as e:
             return jsonify({"error": str(e)}), 500
+    
+class SignUp(Resource):
+    def post(self):
+        data = request.get_json()
+        name = data.get('username')
+        email = data.get('email')
+        password = data.get('password')
+
+        if not name or not email or not password:
+            return jsonify({"error": "All fields are required"}), 422
+
+        new_user = User(
+            name=name,
+            email=email,
+            password=password,
+        )
+
+        try:
+            db.session.add(new_user)
+            db.session.commit()
+            return jsonify({"message": "User created successfully"}), 201
+        except IntegrityError:
+            db.session.rollback()
+            return jsonify({"error": "Email already exists"}), 422
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": "Failed to create user", "details": str(e)}), 500
+
+
+class Login(Resource):
+    def post(self):
+        data = request.json
+        email = data.get('email')
+        password = data.get('password')
+
+        if not email or not password:
+            return jsonify({'success': False, 'message': 'Email and password are required'}), 400
+
+        user = User.query.filter_by(email=email, password=password).first()
+
+        if not user:
+            return jsonify({'success': False, 'message': 'Invalid email or password'}), 401
+
+        db.session['user_id'] = user.id
+        return jsonify({'success': True, 'message': 'Login successful'})
+
+
+class Logout(Resource):
+    def post(self):
+        db.session.clear()
+        return jsonify({"message": "Logged out successfully"}), 200
+
+# Add resources to the API
+api.add_resource(UploadProfilePicture, '/upload')
+api.add_resource(SignUp, '/signup')
+api.add_resource(Login, '/login')
+api.add_resource(Logout, '/logout')
